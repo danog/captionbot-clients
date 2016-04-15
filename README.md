@@ -1,2 +1,2 @@
 # captionbot-clients
-Captionbot.ai API clients in various languages.
+This repo will contain Captionbot.ai API clients in various programming languages.
