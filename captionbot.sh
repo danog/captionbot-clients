@@ -18,7 +18,20 @@ Usage: $0 url
 echo "Connecting to captionbot.ai..."
 conversationId=$(curl -s https://www.captionbot.ai/api/init)
 
-if [ ! -f "$1" ]; then url="\"$1\""; else echo "Uploading image..."; url=$(curl -s https://www.captionbot.ai/api/upload -F "image1=@$1");fi
+if [ "$1" = "bashbotmode" ]; then
+ echo "Send me the image you want me to recognize."
+ read input
+ input=$(echo "$input" | sed 's/\s*//g')
+else
+ input="$1"
+fi
+
+
+if [ ! -f "$input" -o "$1" = "bashbotmode" ]; then
+ url="\"$input\""
+else echo "Uploading image..."
+ url=$(curl -s https://www.captionbot.ai/api/upload -F "image1=@$input")
+fi
 
 echo "Analyzing image..."
 result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":'$url', "conversationId":'$conversationId'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
@@ -28,14 +41,21 @@ message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"/
 
 echo $message
 echo
+
 until [ $s -gt 0 -a $s -le 5 ] 2>/dev/null ;do
- read -p "How did I do (rate 1 to 5)? " s
- [ $s -gt 0 -a $s -le 5 ] 2>/dev/null || echo "You didn't input a valid number. PLease try again!"
+ if [ "$1" = "bashbotmode" ]; then
+  echo 'How did I do? mykeyboardstartshere "1 star" "2 stars" "3 stars" "4 stars" "5 stars"'
+  read s
+  s=$(echo ${s//[^0-9]/})
+ else
+  read -p "How did I do (rate 1 to 5)? " s
+ fi
+ [ $s -gt 0 -a $s -le 5 ] 2>/dev/null || echo "You didn't input a valid number. Please try again!"
 done
 
 result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":"'$s'", "conversationId":'$conversationId', "waterMark":'$watermark'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
 message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g')
 
 echo $message
-
+sleep 1
 echo "Thanks for having used captionbot.ai!"
