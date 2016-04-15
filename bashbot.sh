@@ -12,7 +12,6 @@
 # This file is public domain in the USA and all free countries.
 # If you're in Europe, and public domain does not exist, then haha.
 
-TOKEN='206520417:AAEdzbpAWtd8sAxgoq04u42lhH0bYxf4Lzo'
 URL='https://api.telegram.org/bot'$TOKEN
 
 FORWARD_URL=$URL'/forwardMessage'
@@ -148,16 +147,34 @@ forward() {
 }
 
 startproc() {
-	rm -r $copname
+	send_message "${USER[ID]}" "This is a bot client for captionbot.ai written in bash.
+This bot will try to recognize the content of any image you give him using Microsoft's captionbot.ai website api. 
+
+Available commands:
+/start: Start bot and image recognition process.
+/info: Get shorter info message about this bot.
+/cancel: Cancel any currently running interactive chats.
+
+Captionbot client written by Daniil Gentili @danogentili.
+Contribute to the project: https://github.com/danog/captionbot-clients
+
+Bot written by @topkecleon, Juan Potato (@awkward_potato), Lorenzo Santina (BigNerd95) and Daniil Gentili (@danogentili)
+Contribute to the project: https://github.com/topkecleon/telegram-bot-bash
+"
+
+	killproc
 	mkfifo $copname
-	tmux kill-session -t $copname
-	TMUX= tmux new-session -d -s $copname "./captionbot.sh bashbotmode &>$copname"
-	while tmux ls | grep -q $copname;do
+	TMUX= tmux new-session -d -s $copname "./captionbot.sh bashbotmode &>$copname; echo >$copname; sleep 5; rm -r $copname"
+	while [ -p "$copname" ];do
 		read -t 10 line
 		[ "$line" != "" ] && send_message "${USER[ID]}" "$line"
 		line=
 	done <$copname
 	rm -r $copname
+}
+killproc() {
+	(tmux kill-session -t $copname
+	rm -r $copname)2>/dev/null
 }
 
 inproc() {
@@ -204,41 +221,20 @@ process_client() {
 	if ! tmux ls | grep -q $copname; then
 		[ ! -z ${LOCATION[*]} ] && send_location "${USER[ID]}" "${LOCATION[LATITUDE]}" "${LOCATION[LONGITUDE]}"
 		case $MESSAGE in
-			'/info')
-				send_message "${USER[ID]}" "This bot will try to recognize the content of any image you give him using Microsoft's captionbot.ai website api. Client (https://github.com/danog/captionbot-clients) created by @danogentili."
-				;;
 			'/start')
-				send_message "${USER[ID]}" "This is a bot client for captionbot.ai written in bash.
-This bot will try to recognize the content of any image you give him using Microsoft's captionbot.ai website api. 
-
-Available commands:
-/start: Start bot and image recognition process.
-/info: Get shorter info message about this bot.
-/cancel: Cancel any currently running interactive chats.
-
-Captionbot client written by Daniil Gentili @danogentili.
-Contribute to the project: https://github.com/danog/captionbot-clients
-
-Bot written by @topkecleon, Juan Potato (@awkward_potato), Lorenzo Santina (BigNerd95) and Daniil Gentili (@danogentili)
-Contribute to the project: https://github.com/topkecleon/telegram-bot-bash
-"
-				tmux kill-session -t $copname
-				rm -r $copname
-
 				startproc&
 				;;
-			'')
-				;;
-			*)
-				send_message "${USER[ID]}" "$MESSAGE" "text"
 		esac
 	else
 		case $MESSAGE in
 			'/cancel')
-				tmux kill-session -t $copname
-				rm -r $copname
+				killproc
 				send_message "${USER[ID]}" "Command canceled."
 				;;
+			'/start')
+				startproc&
+				;;
+
 			*) inproc;;
 		esac
 	fi

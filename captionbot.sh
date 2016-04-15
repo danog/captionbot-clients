@@ -13,13 +13,13 @@ Usage: $0 url
 "
  exit 1
 }
-[ $* = "" ] && help
+[ "$*" = "" ] && help
 
 echo "Connecting to captionbot.ai..."
 conversationId=$(curl -s https://www.captionbot.ai/api/init)
 
 if [ "$1" = "bashbotmode" ]; then
- echo "Send me the image you want me to recognize."
+ echo "Send me the image (or the image url) you want me to recognize."
  read input
  input=$(echo "$input" | sed 's/\s*//g')
 else
@@ -28,8 +28,9 @@ fi
 
 
 if [ ! -f "$input" -o "$1" = "bashbotmode" ]; then
- url="\"$input\""
-else echo "Uploading image..."
+ url="\"$(curl -w "%{url_effective}\n" -L -f -s -I -S "$input" -o /dev/null)\"" || { echo "$input isn't a valid url. Please try again."; exit 1; }
+else
+ echo "Uploading image..."
  url=$(curl -s https://www.captionbot.ai/api/upload -F "image1=@$input")
 fi
 
@@ -56,6 +57,7 @@ done
 result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":"'$s'", "conversationId":'$conversationId', "waterMark":'$watermark'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
 message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g')
 
-echo $message
-sleep 1
+[ "$message" = "$s" ] && echo "Thanks for leaving your feedback!" || echo "$message"
 echo "Thanks for having used captionbot.ai!"
+
+exit 0
