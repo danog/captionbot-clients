@@ -28,11 +28,13 @@ conversationId=$(curl -s https://www.captionbot.ai/api/init)
 
 
 if [ ! -f "$input" ]; then
- url="\"$(curl -w "%{url_effective}\n" -L -f -s -I -S "$input" -o /dev/null)\"" || { [ "$2" != "script" ] && echo "$input isn't a valid url. Please try again."; exit 1; }
+ url="\"$(curl -w "%{url_effective}\n" -L -f -s -I -S "$input" -o /dev/null | sed 's/^HTTP/http/g')\"" 2>/dev/null || { [ "$2" != "script" ] && echo "$input isn't a valid url. Please try again."; exit 1; }
 else
  [ "$2" != "script" ] && echo "Uploading image..."
  url=$(curl -s https://www.captionbot.ai/api/upload -F "image1=@$input")
 fi
+
+mediainfo $(echo "$url" | sed 's/^\"//g;s/\"$//g') 2>/dev/null | grep -q Image || { [ "$2" != "script" ] && echo "It looks like $url isn't an image."; exit 1; }
 
 [ "$2" != "script" ] && echo "Analyzing image..."
 result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":'$url', "conversationId":'$conversationId'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
@@ -52,7 +54,7 @@ if [ "$2" != "norate" ];then
   [ $s -gt 0 -a $s -le 5 ] 2>/dev/null || echo "You didn't input a valid number. Please try again!"
  done
 
- result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":"'$s'", "conversationId":'$conversationId', waterMark:'$watermark'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
+ result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"conversationId":'$conversationId', waterMark:'$watermark', "userMessage":"'$s'"}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
  message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g')
 
  [ "$message" = "$s" ] && echo "Thanks for leaving your feedback!" || echo "$message"

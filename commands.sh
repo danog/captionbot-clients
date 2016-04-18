@@ -14,6 +14,7 @@ else
 			send_action ${USER[ID]} typing
 			result=$(./captionbot.sh ${URLS[*]} script)
 			res=$(curl -s "$MSG_URL" -d "chat_id=${USER[ID]}" -d "text=$result" -d "reply_to_message_id=$MESSAGE_ID")
+			return
 		}
 		# Inline 
 		if [ $INLINE == 1 ]; then
@@ -56,14 +57,12 @@ Contribute to the project: https://github.com/danog/captionbot-clients
 
 Bot written by @topkecleon, Juan Potato (@awkward_potato), Lorenzo Santina (BigNerd95) and Daniil Gentili (@danogentili)
 Contribute to the project: https://github.com/topkecleon/telegram-bot-bash
+
+To start, send me a photo.
 "
-			startproc "./captionbot_bashbot.sh"
-			;;
-		'/cancel')
-			if tmux ls | grep -q $copname; then killproc && send_message "${USER[ID]}" "Command canceled.";else send_message "${USER[ID]}" "No command is currently running.";fi
 			;;
 		*)
-			if tmux ls | grep -v send | grep -q $copname;then inproc;fi
+			if tmux ls | grep -v send | grep -q $copname;then inproc; else result=$(./captionbot.sh "$MESSAGE" script) && res=$(curl -s "$MSG_URL" -d "chat_id=${USER[ID]}" -d "text=$result" -d "reply_to_message_id=$MESSAGE_ID"); fi
 			;;
 	esac
 fi
