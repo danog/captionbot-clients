@@ -3,6 +3,7 @@
 
 if [ "$1" = "source" ];then
 	# Edit the token in here
+	source token
 	# Set INLINE to 1 in order to receive inline queries.
 	# To enable this option in your bot, send the /setinline command to @BotFather.
 	INLINE=0
@@ -13,9 +14,14 @@ else
 	if ! tmux ls | grep -v send | grep -q $copname; then
 		[ ! -z $ALLOW ] && {
 			send_action ${USER[ID]} typing
-			convert $ALLOW $NAME.jpg
-			result=$(./captionbot.sh $NAME script)
-			rm $NAME
+			if echo "$ALLOW" | grep -qE '.jpg$\|.png$\|.jpeg$'; then
+				wut=$ALLOW
+			else
+				convert $ALLOW /tmp/$MESSAGE_ID.jpg
+				wut=/tmp/$MESSAGE_ID.jpg
+			fi
+			result=$(./captionbot.sh $wut script)
+			rm /tmp/$MESSAGE_ID.jpg &>/dev/null
 			res=$(curl -s "$MSG_URL" -d "chat_id=${USER[ID]}" -d "text=$result" -d "reply_to_message_id=$MESSAGE_ID")
 			return
 		}

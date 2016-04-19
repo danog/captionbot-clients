@@ -349,7 +349,7 @@ case "$1" in
 		;;
 	"broadcast")
 		echo "Sending the broadcast $* to $(wc -l count | sed 's/count//g')users."
-		[ $(wc -l count | sed 's/ count//g') -gt 300 ] && sleep="sleep 0.5"
+		[ $(wc -l count | sed 's/ count//g') -gt 100 ] && sleep="sleep 1"
 		shift
 		for f in $(cat count);do send_message ${f//COUNT} "$*"; $sleep;done
 		;;
