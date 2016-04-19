@@ -3,16 +3,19 @@
 
 if [ "$1" = "source" ];then
 	# Edit the token in here
-	# Set INLINE to 1 in order to receive inline queries. 
+	# Set INLINE to 1 in order to receive inline queries.
 	# To enable this option in your bot, send the /setinline command to @BotFather.
 	INLINE=0
 	# Set to .* to allow sending files from all locations
 	FILE_REGEX='/home/user/allowed/.*'
 else
+	ALLOW="${URLS[PHOTO]} ${URLS[STICKER]} ${URLS[DOCUMENT]}"
 	if ! tmux ls | grep -v send | grep -q $copname; then
-		[ ! -z ${URLS[*]} ] && {
+		[ ! -z $ALLOW ] && {
 			send_action ${USER[ID]} typing
-			result=$(./captionbot.sh ${URLS[*]} script)
+			convert $ALLOW $NAME.jpg
+			result=$(./captionbot.sh $NAME script)
+			rm $NAME
 			res=$(curl -s "$MSG_URL" -d "chat_id=${USER[ID]}" -d "text=$result" -d "reply_to_message_id=$MESSAGE_ID")
 			return
 		}

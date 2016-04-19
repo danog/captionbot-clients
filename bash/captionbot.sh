@@ -42,6 +42,8 @@ result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: applica
 watermark=$(echo "$result" | sed '/\["WaterMark"\]/!d;s/\["WaterMark"\]\t//g')
 message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g;s/\\n/ /g')
 
+[ "$2" = "script" ] && echo "$message" | grep -q "I really can't describe the picture" && exit 1
+
 echo $message
 
 [ "$2" = "script" ] && exit
