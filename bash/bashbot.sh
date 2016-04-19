@@ -12,6 +12,8 @@
 # This file is public domain in the USA and all free countries.
 # If you're in Europe, and public domain does not exist, then haha.
 
+cd $( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 source commands.sh source
 URL='https://api.telegram.org/bot'$TOKEN
 
