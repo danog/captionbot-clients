@@ -280,9 +280,11 @@ process_client() {
 	
 	# User
 	USER[ID]=$(echo "$res" | egrep '\["result",0,"message","chat","id"\]' | cut -f 2)
+	U=$(echo "$res" | egrep '\["result",0,"message","user","id"\]' | cut -f 2)
 	USER[FIRST_NAME]=$(echo "$res" | egrep '\["result",0,"message","chat","first_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	USER[LAST_NAME]=$(echo "$res" | egrep '\["result",0,"message","chat","last_name"\]' | cut -f 2 | cut -d '"' -f 2)
 	USER[USERNAME]=$(echo "$res" | egrep '\["result",0,"message","chat","username"\]' | cut -f 2 | cut -d '"' -f 2)
+	[ "$U" != "${USER[ID]}" ] && GROUP=y
 
 	# Audio
 	URLS[AUDIO]=$(get_file $(echo "$res" | egrep '\["result",0,"message","audio","file_id"\]' | cut -f 2 | cut -d '"' -f 2))
@@ -324,7 +326,7 @@ process_client() {
 # source the script with source as param to use functions in other scripts
 while [ "$1" == "startbot" ]; do {
 
-	res=$(curl -s $UPD_URL$OFFSET | ./JSON.sh -s)
+	res="$(curl -s $UPD_URL$OFFSET | ./JSON.sh -s)"
 
 	# Offset
 	OFFSET=$(echo "$res" | egrep '\["result",0,"update_id"\]' | cut -f 2)
@@ -351,13 +353,13 @@ case "$1" in
 		;;
 	"broadcast")
 		echo "Sending the broadcast $* to $(wc -l count | sed 's/count//g')users."
-		[ $(wc -l count | sed 's/ count//g') -gt 100 ] && sleep="sleep 1"
+		[ $(wc -l count | sed 's/ count//g') -gt 100 ] && sleep="sleep 2"
 		shift
 		for f in $(cat count);do send_message ${f//COUNT} "$*"; $sleep;done
 		;;
 	"start")
 		tmux kill-session -t $ME&>/dev/null
-		tmux new-session -d -s $ME "bash $SCRIPT startbot" && echo "Bot started successfully. Tmux session name is $ME" || echo "An error occurred while starting the bot."
+		tmux new-session -d -s $ME "bash -c \"while :;do bash $SCRIPT startbot&>>o;done\"" && echo "Bot started successfully. Tmux session name is $ME" || echo "An error occurred while starting the bot."
 		;;
 	"kill")
 		tmux kill-session -t $ME &>/dev/null
