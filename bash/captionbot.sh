@@ -56,7 +56,7 @@ if [ "$2" != "norate" ];then
   [ $s -gt 0 -a $s -le 5 ] 2>/dev/null || echo "You didn't input a valid number. Please try again!"
  done
 
- result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"conversationId":'$conversationId', waterMark:'$watermark', "userMessage":"'$s'"}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
+ result=$(curl -s https://www.captionbot.ai/api/message -H 'Accept: */*'-H 'Referer: https://www.captionbot.ai/' -H 'Content-Type: application/json; charset=utf-8' -X POST -d '{"conversationId":'$conversationId', waterMark:'$watermark', "userMessage":"'$s'"}' | sed 's/\\"/"/g;s/^"//g;s/"$//g' | ./JSON.sh -s)
  message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g')
 
  [ "$message" = "$s" ] && echo "Thanks for leaving your feedback!" || echo "$message"
