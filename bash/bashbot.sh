@@ -359,7 +359,7 @@ case "$1" in
 		;;
 	"start")
 		tmux kill-session -t $ME&>/dev/null
-		tmux new-session -d -s $ME "bash -c \"while :;do bash $SCRIPT startbot&>>o;done\"" && echo "Bot started successfully. Tmux session name is $ME" || echo "An error occurred while starting the bot."
+		tmux new-session -d -s $ME "bash -c \"while :;do bash $SCRIPT startbot $ME;echo restart;done\"" && echo "Bot started successfully. Tmux session name is $ME" || echo "An error occurred while starting the bot."
 		;;
 	"kill")
 		tmux kill-session -t $ME &>/dev/null

@@ -12,21 +12,23 @@ if [ "$1" = "source" ];then
 else
 
 	ALLOW="${URLS[PHOTO]} ${URLS[STICKER]} ${URLS[DOCUMENT]}"
+	ALLOW="$(echo "$ALLOW" | sed 's/^\s*//g;s/\s*$//g')"
 		[ ! -z $ALLOW ] && {
 			send_action ${USER[ID]} typing
 			if echo "$ALLOW" | grep -qE '.jpg$\|.png$\|.jpeg$'; then
 				wut=$ALLOW
 			else
-				convert $ALLOW /tmp/$MESSAGE_ID.jpg
+				wget "$ALLOW" -qO /tmp/$(basename $ALLOW)
+				convert /tmp/$(basename $ALLOW) /tmp/$MESSAGE_ID.jpg
 				wut=/tmp/$MESSAGE_ID.jpg
 			fi
 			result=$(./captionbot.sh $wut script)
-			rm /tmp/$MESSAGE_ID.jpg &>/dev/null
+			rm /tmp/$MESSAGE_ID.jpg  /tmp/$(basename $ALLOW) &>/dev/null
 			res=$(curl -s "$MSG_URL" -d "chat_id=${USER[ID]}" -d "text=$result" -d "reply_to_message_id=$MESSAGE_ID")
 			return
 		}
 	case $MESSAGE in
-		'/start')
+		'/start'*)
 			send_message "${USER[ID]}" "This is a bot client for captionbot.ai written in bash.
 This bot will try to recognize the content of any image you give him using Microsoft's captionbot.ai website api. 
 
@@ -41,7 +43,7 @@ Contribute to the project: https://github.com/danog/captionbot-clients
 Bot written by @topkecleon, Juan Potato (@awkward_potato), Lorenzo Santina (BigNerd95) and Daniil Gentili (@danogentili)
 Contribute to the project: https://github.com/topkecleon/telegram-bot-bash
 
-Do check out my other projects @ https://daniil.it and my other bots, @mklwp_bot and @video_dl_bot!
+Do check out my other projects @ https://daniil.it and Check out my other bots: @video_dl_bot, @mklwp_bot, @caption_ai_bot, @cowsaysbot, @cowthinksbot, @figletsbot, @lolcatzbot, @filtersbot, @id3bot, @pwrtelegrambot!
 
 To start, send me a photo.
 "
