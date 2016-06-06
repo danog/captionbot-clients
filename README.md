@@ -27,6 +27,12 @@ This script will try to recognize the content of any image you give him using Mi
 Usage: ./captionbot.sh file
 or
 Usage: ./captionbot.sh url
+
+Add the norate parameter to avoid the rating prompt:
+Usage: ./captionbot.sh url norate
+
+Add the script parameter to avoid the rating prompt and delete all output apart from the image description:
+Usage: ./captionbot.sh url script
 ```  
 Here follow the instructions :)
 
