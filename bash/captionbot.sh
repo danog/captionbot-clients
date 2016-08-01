@@ -24,7 +24,7 @@ Usage: $0 url script
 input="$1"
 
 [ "$2" != "script" ] && echo "Connecting to captionbot.ai..."
-conversationId=$(curl -s https://www.captionbot.ai/api/init)
+conversationId=$(curl -s https://www.captionbot.ai/api/init | sed 's/"//g')
 
 
 if [ ! -f "$input" ]; then
@@ -37,10 +37,11 @@ fi
 mediainfo $(echo "$url" | sed 's/^\"//g;s/\"$//g') 2>/dev/null | grep -q Image || { [ "$2" != "script" ] && echo "It looks like $url isn't an image."; exit 1; }
 
 [ "$2" != "script" ] && echo "Analyzing image..."
-result=$(curl -s https://www.captionbot.ai/api/message -H "Content-Type: application/json; charset=utf-8" -X POST -d '{"userMessage":'$url', "conversationId":'$conversationId'}' | sed 's/\\"/"/g;s/^"//g;s/"$//g'  | ./JSON.sh -s)
+curl 'https://www.captionbot.ai/api/message' -H 'Host: www.captionbot.ai' -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Content-Type: application/json; charset=utf-8' -H 'X-Requested-With: XMLHttpRequest' -H 'Referer: https://www.captionbot.ai/' -d '{"userMessage":'$url', "conversationId":"'$conversationId'"}'
 
+result=$(curl -s 'https://www.captionbot.ai/api/message?waterMark=&conversationId='$conversationId -H 'Host: www.captionbot.ai' -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'X-Requested-With: XMLHttpRequest' -H 'Referer: https://www.captionbot.ai/' -H 'Connection: keep-alive' | sed 's/\\"/"/g;s/^"//g;s/"$//g' | ./JSON.sh)
 watermark=$(echo "$result" | sed '/\["WaterMark"\]/!d;s/\["WaterMark"\]\t//g')
-message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g;s/\\n/ /g')
+message=$(echo "$result" | sed '/\["BotMessages",1\]/!d;s/\["BotMessages",1\]\t//g;s/^"//g;s/"$//g;s/\\n/ /g;s/\\//g')
 
 [ "$2" = "script" ] && echo "$message" | grep -q "I really can't describe the picture" && exit 1
 
@@ -55,12 +56,10 @@ if [ "$2" != "norate" ];then
   read -p "How did I do (rate 1 to 5)? " s
   [ $s -gt 0 -a $s -le 5 ] 2>/dev/null || echo "You didn't input a valid number. Please try again!"
  done
+ result=$(curl -s 'https://www.captionbot.ai/api/message' -H 'Host: www.captionbot.ai' -H 'User-Agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0' -H 'Accept: */*' -H 'Accept-Language: en-US,en;q=0.5' --compressed -H 'Content-Type: application/json; charset=utf-8' -H 'X-Requested-With: XMLHttpRequest' -H 'Referer: https://www.captionbot.ai/' -X POST -d '{"conversationId":"'$conversationId'","waterMark":'$watermark', "userMessage":"'$s'"}')
 
- result=$(curl -s https://www.captionbot.ai/api/message -H 'Accept: */*'-H 'Referer: https://www.captionbot.ai/' -H 'Content-Type: application/json; charset=utf-8' -X POST -d '{"conversationId":'$conversationId', waterMark:'$watermark', "userMessage":"'$s'"}' | sed 's/\\"/"/g;s/^"//g;s/"$//g' | ./JSON.sh -s)
- message=$(echo "$result" | sed '/\[".*Message"\]/!d;s/\[".*Message"\]\t//g;s/^"//g;s/"$//g')
-
- [ "$message" = "$s" ] && echo "Thanks for leaving your feedback!" || echo "$message"
+ [ "$message" = "" ] && echo "Thanks for leaving your feedback!" || echo "$message"
 fi
-echo "Thanks for having used captionbot.ai! Do check out my other projects @ daniil.it and my live wallpaper creator bot, @mklwp_bot!"
+echo "Thanks for having used captionbot.ai! Do check out my other projects @ daniil.it and my boosted version of telegram's Bot API: pwrtelegram.xyz!"
 
 exit 0
